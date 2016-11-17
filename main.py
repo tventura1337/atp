@@ -1,6 +1,6 @@
 import csv
 
-class QLearning(object):
+class learning(object):
     """docstring for GraphNode"""
     def __init__(self, arg = None):
         super(GraphNode, self).__init__()
@@ -25,10 +25,12 @@ class RouteMap(object):
             if row[0] == self.source:
                 if row[1] not in flyingTo:
                     flyingTo.append(row[1])
+            
         for row in dataset:
             if row[0] in flyingTo and row[1] == self.destination:
                 if row[0] not in self.connected:
                     self.connected.append(row[0])
+        #print self.connected
     
     def train(self, dataset): # add flights for this map on big dataset
         for row in dataset:
@@ -36,7 +38,9 @@ class RouteMap(object):
             destination = row[1]
             delayed = row[3]
 
-            if (source == self.source and destination in self.connected) or (source in self.connected and destination == self.destination):
+            if (source == self.source and destination in self.connected)\
+                or (source in self.connected and destination == self.destination)\
+                    or (source == self.source and destination == self.destination):
                 flight = Flight()
                 flight.airport1 = source
                 flight.airport2 = destination
@@ -46,7 +50,7 @@ class RouteMap(object):
                 
     
     def get_routes(self):
-        return self.flights.pop()
+        return self.flights
         
         
 class Flight(object):
@@ -79,7 +83,8 @@ def load_data(filepath):
             dataset.append((source, destination, delay, cancelled))
     return dataset
             
-
+def qLearning(flightRoutes):
+    pass
 
 def main():
     
@@ -90,14 +95,8 @@ def main():
     #real_data = load_data('dataset.csv')
     model.train(model_data)
     
-    while True:
-        flight = model.get_routes()
-        if not flight:
-            return False
-            
-        print flight.airport1, flight.airport2
+    qLearning(model.get_routes)
 
-    #model.get()
 
 if __name__ == "__main__":
     main()
