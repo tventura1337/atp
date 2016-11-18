@@ -1,12 +1,33 @@
 import csv
+import argparse
 
-class learning(object):
+class Learning(object):
     """docstring for GraphNode"""
-    def __init__(self, arg = None):
+    def __init__(self, arg):
         super(GraphNode, self).__init__()
-        self.arg = arg
+        self.flights = arg
         self.airport = None
+        self.discount = discount
         
+        
+        
+    """"
+    Iterate here
+    """  
+        
+    def computeQValueFromValues(self, currentState, action):
+        pass
+        
+    def computeBestActionFromValues(self, state):
+        pass
+    
+    def getPolicy(self, state):
+        return self.computeBestActionFromValues(state)
+
+
+    def getQValue(self, state, action):
+        #print "zzz", self.computeQValueFromValues(state, action)
+        return self.computeQValueFromValues(state, action)
 
         
         
@@ -51,7 +72,9 @@ class RouteMap(object):
     
     def get_routes(self):
         return self.flights
-        
+    
+    def get_routes(self):
+        return self.connected
         
 class Flight(object):
     def __init__(self, arg = None):
@@ -87,14 +110,20 @@ def qLearning(flightRoutes):
     pass
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-s', '--source')
+    parser.add_argument('-d', '--destination')
+    args = parser.parse_args()
     
-    model = RouteMap("JFK", "STL")
+    
+    model = RouteMap(args.source, args.destination)
     model_data = load_data('dataset.csv')
     model.create(model_data)
     
     #real_data = load_data('dataset.csv')
     model.train(model_data)
     
+    print model.source, "->>", model.get_routes(), "->>", model.destination
     qLearning(model.get_routes)
 
 
