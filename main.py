@@ -7,13 +7,7 @@ class Learning(object):
         super(GraphNode, self).__init__()
         self.flights = arg
         self.airport = None
-        self.discount = discount
-        
-        
-        
-    """"
-    Iterate here
-    """  
+        self.discount = discount  
         
     def computeQValueFromValues(self, currentState, action):
         pass
@@ -109,23 +103,31 @@ def load_data(filepath):
 def qLearning(flightRoutes):
     pass
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-s', '--source')
-    parser.add_argument('-d', '--destination')
-    args = parser.parse_args()
+def find(source, destination):
+    #parser = argparse.ArgumentParser()
+    # parser.add_argument('-s', '--source')
+    # parser.add_argument('-d', '--destination')
+    # args = parser.parse_args()
     
     
-    model = RouteMap(args.source, args.destination)
+    model = RouteMap(source, destination)
     model_data = load_data('dataset.csv')
     model.create(model_data)
     
     #real_data = load_data('dataset.csv')
     model.train(model_data)
     
-    print model.source, "->>", model.get_routes(), "->>", model.destination
-    qLearning(model.get_routes)
+    route = {
+            "source": model.source,
+            "destination": model.destination,
+            "routes": model.get_routes()
+            }
 
+    return route
+    #qLearning(model.get_routes)
+
+def main():
+    pass
 
 if __name__ == "__main__":
     main()
