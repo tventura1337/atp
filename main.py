@@ -3,24 +3,41 @@ import argparse
 
 class Learning(object):
     """docstring for GraphNode"""
-    def __init__(self, arg):
+    def __init__(self, arg, alpha=0.5, epsilon=0.5):
         super(GraphNode, self).__init__()
         self.flights = arg
         self.airport = None
         self.discount = discount
+        self.alpha = float(alpha)
+        self.epsilon = float(epsilon)
 
-    def computeQValueFromValues(self, currentState, action):
+    def update(self, state, action, nextState, reward):
+        oldQValue = self.getQValue(state, action)
+        nextQValue = self.getValue(nextState)
+        sample = reward + (self.discount * nextQValue)
+
+        self.qValues[state, action] = (1 - self.alpha) * oldQValue + self.alpha * sample
+
+    def computeValueFromQValues(self, state):
+        # compute max action q Value
         pass
 
-    def computeBestActionFromValues(self, state):
+    def computeActionFromQValues(self, state):
+        # compute best Action in state
+        pass
+
+    def getAction(self, state):
+        # some way to determine where a plane can travel
         pass
 
     def getPolicy(self, state):
-        return self.computeBestActionFromValues(state)
+        return self.computeActionFromQValues(state)
+
+    def getValue(self, state):
+        return self.computeValueFromQValues
 
     def getQValue(self, state, action):
-        #print "zzz", self.computeQValueFromValues(state, action)
-        return self.computeQValueFromValues(state, action)
+        return self.qValues[state, action]
 
 
 class RouteMap(object):
