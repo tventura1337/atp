@@ -1,28 +1,94 @@
 <!DOCTYPE html>
 <html>
+<head>
+	<script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+	<script src="jquery.easy-autocomplete.min.js"></script> 
+	<link rel="stylesheet" href="easy-autocomplete.min.css"> 
+	<style>
+
+
+	/* When the body has the loading class, we turn
+	   the scrollbar off with overflow:hidden */
+	.loading {
+		display: none;
+		border: 8px solid #f3f3f3;
+		border-top: 8px solid #434343;
+		border-radius: 50%;
+		width: 80px;
+		height: 80px;
+		animation: spin 1s linear infinite;
+		z-index: 1;
+		margin-bottom: 9999px;
+	}
+	@keyframes spin {
+	    0% { transform: rotate(0deg); }
+	    100% { transform: rotate(360deg); }
+	}
+
+	</style>
+</head>
 <body>
-<script type="text/javascript" src="http://code.jquery.com/jquery-2.1.4.min.js"></script>  
+	<div class="loading"></div>
+	<section>
+		<h1>Air Planner</h1>
+		<div style="width: 150px;">
+		<input id="src" placeholder="Source AP"/>
+		<input id="destination" placeholder="Destinationa AP"/>
+		<div>
+		<button class="find">Calculate</button>
+	</section>
+	<script>
+		$(document).ajaxStart(function () {
+		    $(".loading").show();
+		}).ajaxComplete(function () {
+		   $(".loading").hide();
+		});
 
-<iframe src="https://www.google.com/maps/d/embed?mid=1u-zeKTTrzu3lc2LNIwgO_OwmziE&hl=en_US" width="640" height="480"></iframe>
-<script>
-/*	input ="-s JFK -d ABQ";
 
-	function postData(input) {
-	    $.ajax({
-	        type: "POST",
-	        url: "main.py",
-	        data: { param: input },
-	        success: callbackFunc
-	    });
-	}
+		function get_airports() {
+			$.ajax({
+				type: "GET",
+				url: "http://flowmaster.org:8888/airports/",
+				//data: { param: input },
+				success: callback_get_airports
+				});
+		}
 
-	function callbackFunc(response) {
-	    // do something with the response
-	    console.log(response);
-	}
+		function callback_get_airports(response) {
+			// do something with the response
+			var data = response["data"]
+			console.log(data);
+			var status = response["status"]
+			var options = {
+				data: data,
+				getValue: "name",
+				list: {
+					match: {
+						enabled: true
+					}
+					
+				}
+	
+			};
 
-	postData('data to process');
-*/
-</script>
+			$("#src").easyAutocomplete(options);
+			$("#destination").easyAutocomplete(options);
+		}
+		
+		function find_optimal_routes(){
+			var source = $("#src").val();
+			var destination = $("#destination").val();
+			console.log(source, destination);
+		}
+		get_airports();
+		
+		$(".find").click(function(){
+			find_optimal_routes();
+		});
+		
+		
+		
+		
+	</script>
 </body>
 </html>
