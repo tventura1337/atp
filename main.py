@@ -10,6 +10,8 @@ class Learning(object):
         self.discount = discount
         self.alpha = float(alpha)
         self.epsilon = float(epsilon)
+        
+        
 
     def update(self, state, action, nextState, reward):
         oldQValue = self.getQValue(state, action)
@@ -68,11 +70,16 @@ class RouteMap(object):
             source = row[1]
             destination = row[2]
             delayed = row[4]
+            
+            if row[3] != "":
+                cancelled = int(float(row[3]))
+            if row[4] != "":
+                delayed = int(float(row[4]))
 
             if (source == self.source and destination in self.connected)\
                 or (source in self.connected and destination == self.destination)\
                     or (source == self.source and destination == self.destination):
-                flight = Flight(source, destination, delayed)
+                flight = Flight(source, destination, cancelled, delayed)
                 self.flights.append(flight) ##save into flight class
 
     def get_all_airports(self, dataset):
@@ -101,13 +108,13 @@ class RouteMap(object):
 
 class Flight(object):
     flightCount = 0
-    def __init__(self, source, destination, delayed):
+    def __init__(self, source, destination, cancelled, delayed):
         super(Flight, self).__init__()
         self.airport1 = source
         self.airport2 = destination
         self.distance = 0
         self.delayed = delayed
-        self.cancelled = None
+        self.cancelled = cancelled
         
         Flight.flightCount += 1
 
@@ -132,15 +139,26 @@ def load_data(filepath):
     return dataset
 
 def mdp(model, source, destination):
-    #print model.get_flights()
-    #print model.get_specific_flights("JFK", "MIA")
-    # flights = model.get_specific_flights("JFK", "MIA")
-    # print flights[0].flightCount
+    ##example for delayed and cancelled
+    flights = model.get_specific_flights("BOS", "MIA")
+    flightsNum, delayedNum, cancelledNum = 0, 0, 0
+
+
+    for flight in flights:
+        flightsNum += 1
+        if flight.delayed:
+            delayedNum +=1
+        if flight.cancelled:
+            cancelledNum += 1
+    delayedProb = delayedNum/float(flightsNum)
+    cancelledProb = cancelledNum/float(flightsNum)
+    print delayedProb, cancelledProb
+    pass
     
 
 def estimateCost(flight):
-    src = flight.source
-    dest = flight.destination
+    src = flight.airport1
+    dest = flight.airport2
     cost = 0.0
     count = 0
 
@@ -154,7 +172,7 @@ def estimateCost(flight):
     avg = cost/count
     return avg
 
-def find(source = "JFK", destination="MIA"):
+def find(source, destination):
     
     model = RouteMap(source, destination)
     model_data = load_data('dataset.csv')
@@ -166,11 +184,11 @@ def find(source = "JFK", destination="MIA"):
     # route = {
     #         "source": model.source,
     #         "destination": model.destination,
-    #         "routes": model.get_specific_flights("BOS", "MIA")
+    #         "routes": model.get_specific_flights("BOS", "MIA")[0].flightCount
     #         }
     # rt = model.get_specific_flights("BOS", "MIA")
     mdp(model, source, destination)
-    return model
+    # return route
 
 
 def airports_list():
@@ -178,9 +196,15 @@ def airports_list():
     kList = RouteMap()
     airports = kList.get_all_airports(model_data)
     response = [{"name": name +" - "+ code, "code": code} for name, code in airports]
-    json = {"status": "ok",
+    json = {
+            "status": "ok",
             "data": response
             }
     return json
+
+
+def main():
+    find("JFK", "MIA")
+    
 if __name__ == "__main__":
-    find()
+    main()
