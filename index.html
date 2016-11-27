@@ -2,8 +2,8 @@
 <html>
 <head>
 	<script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
-	<script src="jquery.easy-autocomplete.min.js"></script> 
-	<link rel="stylesheet" href="easy-autocomplete.min.css"> 
+	<script src="autocomplete/jquery.easy-autocomplete.min.js"></script> 
+	<link rel="stylesheet" href="autocomplete/easy-autocomplete.min.css"> 
 	<style>
 
 
@@ -43,7 +43,12 @@
 		}).ajaxComplete(function () {
 		   $(".loading").hide();
 		});
-
+		
+		get_airports();
+		
+		function callback_return_optimal(response){
+			console.log(response);
+		}
 
 		function get_airports() {
 			$.ajax({
@@ -57,7 +62,6 @@
 		function callback_get_airports(response) {
 			// do something with the response
 			var data = response["data"]
-			console.log(data);
 			var status = response["status"]
 			var options = {
 				data: data,
@@ -66,7 +70,6 @@
 					match: {
 						enabled: true
 					}
-					
 				}
 	
 			};
@@ -78,17 +81,22 @@
 		function find_optimal_routes(){
 			var source = $("#src").val();
 			var destination = $("#destination").val();
-			console.log(source, destination);
+			source = source.split(' - ');
+			destination = destination.split(' - ');
+			request = "http://flowmaster.org:8888/optimal/"+source[source.length-1]+"/"+destination[destination.length-1]+"/";
+			console.log(request)
+			$.ajax({
+				type: "GET",
+				url: request,
+				success: callback_return_optimal
+			});
 		}
-		get_airports();
-		
+
 		$(".find").click(function(){
 			find_optimal_routes();
 		});
 		
-		
-		
-		
+			
 	</script>
 </body>
 </html>

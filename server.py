@@ -2,7 +2,7 @@ import json
 
 import bottle
 from bottle import response
-from main import airports_list, mdp
+from main import airports_list, find
 # app and routers
 
 # the decorator
@@ -29,9 +29,9 @@ app = bottle.app()
 def get_all():
     return airports_list()
 
-@app.route('/optimal/<source>/<destination>', method=['GET'])
+@app.route('/optimal/<source>/<destination>/', method=['GET'])
 def get_optimal(source, destination):
-    return mdp(source, destination)
+    return find(source, destination)
 
 app.install(EnableCors())
 

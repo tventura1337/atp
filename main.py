@@ -2,41 +2,44 @@ import csv
 import pandas as pd
 import argparse
 from collections import Counter
+from datetime import datetime
 
 class Learning(object):
     """docstring for GraphNode"""
-    def __init__(self, model, time = 0, iterations = 100):
+    def __init__(self, model, time = 1, iterations = 3):
         if time:
             self.discount = 0.8
         else:
             self.discount = 1
         self.model = model
         self.iterations = iterations
+        self.qvalues = {}
         self.values = Counter()
-
+        self.destination = "JFK"
+        iterationState = Counter()
+        
         allStates = self.model.get_all_states()
+        
         for i in range(iterations):
             newValues = Counter()
+            
             for state in allStates:
-                allActions = self.model.get_possible_actions(state)
-                bestValue = float("inf")
-                for action in allActions:
-                    sumTransitionStates = 0
-                    transitionStates = mdp(self.model, state, action)
-                    for nextState, prob in transitionStates:
-                        if len(nextState) > 3:
-                            sumTransitionStates += prob * (1000 + (self.discount * self.getValue(action)))
-                        else:
-                            sumTransitionStates += prob * (self.model.get_cost(state, nextState) + (self.discount * self.getValue(nextState)))
-                    if sumTransitionStates is min(sumTransitionStates, bestValue):
-                        bestValue = sumTransitionStates
-                        newValues[state] = bestValue
-            self.values = newValues
+                if state == self.destination:
+                    continue
+                #allActions = self.model.get_possible_actions(state)
+                maxAction = self.computeActionFromValues(state)
+                iterationState[state] = self.computeQValueFromValues(state, maxAction)
+
+            for state in allStates:   
+                self.values[state] = iterationState[state]
+        
+        print self.qvalues
 
     def computeQValueFromValues(self, state, action):
         q = 0
         transitionStates = mdp(self.model, state, action)
-
+        #print transitionStates
+        
         for nextState, prob in transitionStates:
             if len(nextState) > 3:
                 q += prob * (1000 + (self.discount * self.getValue(action)))
@@ -45,31 +48,35 @@ class Learning(object):
         return q
 
     def computeActionFromValues(self, state):
+        if state == self.destination:
+            return None
         bestValue = float("inf")
         bestAction = None
         possibleActions = self.model.get_possible_actions(state)
-
+        #print state, possibleActions
         for action in possibleActions:
             if not possibleActions:
                 return None
-
+            
             q = self.getQValue(state, action)
 
-            print "Action is: " + action
-            print "Value is: " + str(q)
-
+            # print "Action is: " + action
+            # print "Value is: " + str(q)
+            if (state, action) not in self.qvalues:
+                self.qvalues[state, action] = q
+                
             if q is min(q, bestValue):
 
                 bestValue = q
                 bestAction = action
+            
+            
 
         return bestAction
 
     def getValue(self, state):
-        if state == "cancelled" or state == "delayed":
-            return -10
-        else:
-            return self.values[state]
+
+        return self.values[state]
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
@@ -105,6 +112,7 @@ class RouteMap(object):
                     self.connected.append(row[1])
 
     def estimate_costs(self):
+        time_start = datetime.now()    
         costData = pd.read_csv('costs.csv', index_col = False)
         for source in self.get_all_states():
             src = costData['ORIGIN'] == source
@@ -121,7 +129,8 @@ class RouteMap(object):
                 else:
                     avg = cost/count
                 self.costs[(source, destination)] = avg
-            #    print source + " to " + destination + " is " + str(self.costs[(source, destination)])
+        print "cost:", datetime.now() - time_start   
+            #print source + " to " + destination + " is " + str(self.costs[(source, destination)])
 
     def train(self, dataset): # add flights for this map on big dataset
         for row in dataset:
@@ -283,7 +292,7 @@ def computeCosts(source, destination):
     pass
 
 def main():
-    find("JFK", "MIA")
+    find("LAX", "JFK")
 
 if __name__ == "__main__":
     main()
