@@ -5,7 +5,7 @@ from datetime import datetime
 
 class Learning(object):
     """docstring for GraphNode"""
-    def __init__(self, model, time = 1, iterations = 5):
+    def __init__(self, model, time = 0, iterations = 10):
         if time:
             self.discount = 0.8
         else:
@@ -19,11 +19,12 @@ class Learning(object):
 
         
         allStates = self.model.get_all_states()
-        print allStates
+
         for i in range(iterations):
             newValues = Counter()
 
             for state in allStates:
+
                 if state == "TERMINAL_STATE":
                     continue
 
@@ -32,7 +33,7 @@ class Learning(object):
  
             for state in allStates:               
                 self.values[state] = newValues[state]
-            print i," ", self.values, self.values[self.destination]
+            print i
             
 
 
@@ -40,7 +41,14 @@ class Learning(object):
         q = 0
         transitionStates = mdp(self.model, state, action)
         for nextState, prob in transitionStates:
-            q += prob * (self.model.get_cost(state, nextState) + (self.discount * self.getValue(nextState)))
+            cost = 0
+            if state == self.destination:
+                cost = self.model.get_cost(self.destination, "TERMINAL_STATE")
+            elif (state == self.source) and (nextState == self.destination):
+                cost = self.model.get_cost(state, nextState)
+            elif (state != self.source) and (nextState == self.destination):
+                cost = self.model.get_cost(self.source, state) + self.model.get_cost(state, nextState)
+            q += prob * (cost + (self.discount * self.getValue(nextState)))
         return q
 
     def computeActionFromValues(self, state):
@@ -50,18 +58,15 @@ class Learning(object):
         bestValue = float("inf")
         bestAction = None
         possibleActions = self.model.get_possible_actions(state)
-        #print possibleActions
         for action in possibleActions:
             if not possibleActions:
                 return None
             q = self.getQValue(state, action)
 
-            #print "Action is: " + action
-            #print "Value is: " + str(q)
             if (state, action) not in self.qvalues:
                 self.qvalues[state, action] = 0
             self.qvalues[state, action] = q  
-            #print "here"
+
             if q is min(q, bestValue):
 
                 bestValue = q
@@ -92,7 +97,6 @@ class Learning(object):
 
         for k in vals.keys():
             self.qvalues[k] = float(vals[k])/sum(vals.values())
-        print self.qvalues
 
 
 class RouteMap(object):
@@ -128,8 +132,9 @@ class RouteMap(object):
                 
         allStates = self.get_all_states()
         for state in allStates:
-            self.costs[state, state] = 0
-        self.costs[self.destination, "TERMINAL_STATE"] = -100
+            self.costs[state, state] = 100
+        self.costs[self.destination, "TERMINAL_STATE"] = -300
+        #print self.costs
                 
 
 
@@ -274,7 +279,7 @@ def find(source, destination):
 
     action = learn.getAction(source)
     print "Best airport is:" + action
-    print learn.qvalues
+    learn.normalize()
     
     routes = []
     for c in model.connected:
@@ -285,6 +290,10 @@ def find(source, destination):
                 'second': ((c, destination), learn.qvalues[(c, destination)])
                 
             })
+    if (source, destination) in learn.qvalues:
+        routes.append({
+            'direct': ((source, destination), learn.qvalues[(source, destination)])
+        })
     print routes
     
     # for qval in learn.qvalues.keys():
@@ -319,7 +328,7 @@ def airports_list():
 
 
 def main():
-    find("LAX", "SFO")
+    find("BOS", "LGA")
     pass
 
 if __name__ == "__main__":
