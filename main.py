@@ -1,5 +1,4 @@
 import csv
-import pandas as pd
 import argparse
 from collections import Counter
 from datetime import datetime
@@ -13,28 +12,28 @@ class Learning(object):
             self.discount = 1
         self.model = model
         self.iterations = iterations
-        self.qvalues = {}
+        self.qvalues = Counter()
         self.values = Counter()
         self.source = model.source
         self.destination = model.destination
 
         
         allStates = self.model.get_all_states()
-        #print allStates
+        print allStates
         for i in range(iterations):
             newValues = Counter()
-            for state in allStates:
-                if state == self.destination:
-                    newValues[state] = 1000
-                    continue
 
+            for state in allStates:
+                if state == "TERMINAL_STATE":
+                    continue
 
                 maxAction = self.computeActionFromValues(state)
                 newValues[state] = self.computeQValueFromValues(state, maxAction)
  
             for state in allStates:               
                 self.values[state] = newValues[state]
-            print i," ", self.values
+            print i," ", self.values, self.values[self.destination]
+            
 
 
     def computeQValueFromValues(self, state, action):
@@ -45,17 +44,16 @@ class Learning(object):
         return q
 
     def computeActionFromValues(self, state):
-        # if state == self.destination:
-        #     return None
+        if state == "TERMINAL_STATE":
+            return None
             
         bestValue = float("inf")
         bestAction = None
         possibleActions = self.model.get_possible_actions(state)
-
+        #print possibleActions
         for action in possibleActions:
             if not possibleActions:
                 return None
-            
             q = self.getQValue(state, action)
 
             #print "Action is: " + action
@@ -63,14 +61,14 @@ class Learning(object):
             if (state, action) not in self.qvalues:
                 self.qvalues[state, action] = 0
             self.qvalues[state, action] = q  
-              
+            #print "here"
             if q is min(q, bestValue):
 
                 bestValue = q
                 bestAction = action
             
             
-
+        
         return bestAction
 
     def getValue(self, state):
@@ -85,6 +83,16 @@ class Learning(object):
 
     def getQValue(self, state, action):
         return self.computeQValueFromValues(state, action)
+        
+    def normalize(self):
+        
+        vals = Counter()
+        for val in self.qvalues:
+            vals[val] = self.qvalues[val]
+
+        for k in vals.keys():
+            self.qvalues[k] = float(vals[k])/sum(vals.values())
+        print self.qvalues
 
 
 class RouteMap(object):
@@ -121,6 +129,7 @@ class RouteMap(object):
         allStates = self.get_all_states()
         for state in allStates:
             self.costs[state, state] = 0
+        self.costs[self.destination, "TERMINAL_STATE"] = -100
                 
 
 
@@ -162,11 +171,12 @@ class RouteMap(object):
     def get_possible_actions(self, airport):
         if airport == self.source:
             temp = list(self.connected)
-            if self.destination not in temp:
+            #print "cost", self.costs(self.source, self.destination)
+            if (self.source, self.destination) in self.costs:
                 temp.append(self.destination)
             return temp
         elif airport == self.destination:
-            return []
+            return ["TERMINAL_STATE"]
         else:
             temp = self.destination
             return [temp]
@@ -227,7 +237,7 @@ def mdp(model, source, destination):
     ##example for delayed and cancelled
     flights = model.get_specific_flights(source, destination)
     flightsNum, delayedNum, cancelledNum = 0, 0, 0
-
+    
     for flight in flights:
         flightsNum += 1
         if flight.delayed:
@@ -240,7 +250,7 @@ def mdp(model, source, destination):
     delayedProb = delayedNum/float(flightsNum)
     cancelledProb = cancelledNum/float(flightsNum)
     noProb = 1 - (delayedProb + cancelledProb)
-
+    
     return [(destination, noProb), (source, cancelledProb), (destination, delayedProb)]
 
 def find(source, destination):
@@ -265,15 +275,34 @@ def find(source, destination):
     action = learn.getAction(source)
     print "Best airport is:" + action
     print learn.qvalues
-    #print learn.qvalues["LAX", "PHL"], learn.qvalues["PHL", "JFK"], "direct", learn.qvalues["LAX", "JFK"]
+    
+    routes = []
+    for c in model.connected:
+        if (source, c) in learn.qvalues and (c, destination) in learn.qvalues:
+            
+            routes.append({
+                'first': ((source, c), learn.qvalues[(source, c)]),
+                'second': ((c, destination), learn.qvalues[(c, destination)])
+                
+            })
+    print routes
+    
+    # for qval in learn.qvalues.keys():
+    #     for connect in model.connected:
+    #         if qval[0] == connected:
+    #
+    #     if (qval[0] in model.connected) or (qval[1] in model.connected):
+    #         print qval
+    
 
-    # route = {
-    #         "source": model.source,
-    #         "destination": model.destination,
-    #         "routes": model.get_specific_flights("BOS", "MIA")[0].flightCount
-    #         }
-    # rt = model.get_specific_flights("BOS", "MIA")
-    # return route
+    json = {
+            "source": model.source,
+            "destination": model.destination,
+            "optimal": action,
+            "routes": learn.qvalues
+            }
+    #rt = model.get_specific_flights("BOS", "MIA")
+    return json
 
 
 def airports_list():
@@ -281,17 +310,17 @@ def airports_list():
     kList = RouteMap()
     airports = kList.get_all_airports(model_data)
     response = [{"name": name +" - "+ code, "code": code} for name, code in airports]
+
     json = {
             "status": "ok",
             "data": response
             }
     return json
 
-def computeCosts(source, destination):
-    pass
 
 def main():
-    find("LAX", "JFK")
+    find("LAX", "SFO")
+    pass
 
 if __name__ == "__main__":
     main()
