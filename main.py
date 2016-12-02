@@ -3,9 +3,11 @@ import argparse
 from collections import Counter
 from datetime import datetime
 
+
+
 class Learning(object):
     """docstring for GraphNode"""
-    def __init__(self, model, time = 0, iterations = 10):
+    def __init__(self, model, time = 0, iterations = 5):
         if time:
             self.discount = 0.8
         else:
@@ -90,20 +92,25 @@ class Learning(object):
         return self.computeQValueFromValues(state, action)
         
     def normalize(self):
+        print self.qvalues
         
         vals = Counter()
         for val in self.qvalues:
+            if self.qvalues[val] == -100.0:
+                continue
             vals[val] = self.qvalues[val]
 
-        for k in vals.keys():
-            self.qvalues[k] = float(vals[k])/sum(vals.values())
 
+        for k in vals.keys():
+            self.qvalues[k] = float(vals[k] - min(vals.values()))/(max(vals.values()) - min(vals.values()))
+        print self.qvalues
 
 class RouteMap(object):
     """docstring for GraphNode"""
     def __init__(self, source=None, destination=None):
         super(RouteMap, self).__init__()
         self.connected = []
+        self.allAirports = []
         self.source = source
         self.destination = destination
         self.flights = []
@@ -133,7 +140,7 @@ class RouteMap(object):
         allStates = self.get_all_states()
         for state in allStates:
             self.costs[state, state] = 100
-        self.costs[self.destination, "TERMINAL_STATE"] = -300
+        self.costs[self.destination, "TERMINAL_STATE"] = -150
         #print self.costs
                 
 
@@ -157,14 +164,14 @@ class RouteMap(object):
 
 
     def get_all_airports(self, dataset):
-        allAirports = []
+
         for row in dataset:
             name = row[1]
             code = row[0]
-            if (name, code) not in allAirports:
-                allAirports.append((name, code))
+            if (name, code) not in self.allAirports:
+                self.allAirports.append((name, code))
 
-        return allAirports
+        return self.allAirports
 
     def get_all_states(self):
         temp = list(self.connected)
@@ -234,7 +241,8 @@ def load_data(filepath):
                 parsedRow.append(column)
 
             dataset.append((parsedRow))
-
+        f.close()
+        
     dataset.pop(0)
     return dataset
 
@@ -259,42 +267,67 @@ def mdp(model, source, destination):
     return [(destination, noProb), (source, cancelledProb), (destination, delayedProb)]
 
 def find(source, destination):
-    model = RouteMap(source, destination)
     model_data = load_data('dataset.csv')
-    cost_data = load_data('costs.csv')
+    
+    model = RouteMap(source, destination)
     model.create(model_data)
 
-    #real_data = load_data('dataset.csv')
+
+
     print "Training Model"
     model.train(model_data)
     print "Model is trained"
+    model_data = None
     
+    cost_data = load_data('costs.csv')
     print "Finding Costs"
     model.estimate_costs(cost_data)
     print "Costs are found"
+    cost_data = None
 
+    
+    
     print "Running value iteration"
     learn = Learning(model)
     print "Finished learning"
 
     action = learn.getAction(source)
+    if not action:
+        print "No routes found"
+        json = {
+            "found": "No"
+        }
+        return json
     print "Best airport is:" + action
-    learn.normalize()
+    #learn.normalize()
     
     routes = []
+    direct = None
+    codename = {}
+    
+    code_data = load_data('nameset.csv')
+    airports = model.get_all_airports(code_data)
+    code_data = None
+
+    for name, code in airports:
+        codename[code] = name
+    
+    
     for c in model.connected:
         if (source, c) in learn.qvalues and (c, destination) in learn.qvalues:
             
             routes.append({
-                'first': ((source, c), learn.qvalues[(source, c)]),
-                'second': ((c, destination), learn.qvalues[(c, destination)])
+                'name': codename[c],
+                'second': round(learn.qvalues[(c, destination)], 3),
+                'first': round(learn.qvalues[(source, c)], 3)
                 
             })
     if (source, destination) in learn.qvalues:
-        routes.append({
-            'direct': ((source, destination), learn.qvalues[(source, destination)])
-        })
-    print routes
+        direct = "Direct flight: "+ str(round(learn.qvalues[(source, destination)], 3))
+        
+
+    sortedRoutes = sorted(routes, key=lambda route: route["first"])
+    print sortedRoutes
     
     # for qval in learn.qvalues.keys():
     #     for connect in model.connected:
@@ -305,21 +338,24 @@ def find(source, destination):
     
 
     json = {
+            "found": "yes",
             "source": model.source,
             "destination": model.destination,
-            "optimal": action,
-            "routes": learn.qvalues
+            "optimal": codename[action],
+            "routes": sortedRoutes,
+            "direct": direct
             }
     #rt = model.get_specific_flights("BOS", "MIA")
+
     return json
 
 
 def airports_list():
-    model_data = load_data('small_set.csv')
     kList = RouteMap()
-    airports = kList.get_all_airports(model_data)
+    code_data = load_data('nameset.csv')
+    airports = kList.get_all_airports(code_data)
     response = [{"name": name +" - "+ code, "code": code} for name, code in airports]
-
+    
     json = {
             "status": "ok",
             "data": response
@@ -329,7 +365,11 @@ def airports_list():
 
 def main():
     find("BOS", "LGA")
+    #airports_list()
     pass
+
+
+
 
 if __name__ == "__main__":
     main()
