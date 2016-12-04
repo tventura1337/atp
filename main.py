@@ -255,7 +255,8 @@ def mdp(model, source, destination):
 
     return [(destination, noProb), (source, cancelledProb), (destination, delayedProb)]
 
-## USED FOR DEBUGGING
+# main driver function, takes source and destination airports and creates RouteMap with all flights
+# and learns optimal route between the two
 def find(source, destination):
     model_data = load_data('dataset.csv')
 
@@ -329,6 +330,7 @@ def find(source, destination):
 
     return json
 
+# function that preloads airport name and code for autocomplete purposes
 def airports_list():
     kList = RouteMap()
     code_data = load_data('nameset.csv')
@@ -340,6 +342,7 @@ def airports_list():
             }
     return json
 
+## USED FOR DEBUGGING
 def main():
     find("BOS", "LGA")
     #airports_list()
