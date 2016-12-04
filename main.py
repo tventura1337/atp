@@ -3,11 +3,10 @@ import argparse
 from collections import Counter
 from datetime import datetime
 
-
-
+# Learning class - contains all value iteration methods
 class Learning(object):
     """docstring for GraphNode"""
-    def __init__(self, model, time = 0, iterations = 5):
+    def __init__(self, model, time = 0, iterations = 5): # performs value iteration
         if time:
             self.discount = 0.8
         else:
@@ -19,27 +18,21 @@ class Learning(object):
         self.source = model.source
         self.destination = model.destination
 
-        
         allStates = self.model.get_all_states()
 
         for i in range(iterations):
             newValues = Counter()
-
             for state in allStates:
-
                 if state == "TERMINAL_STATE":
                     continue
 
                 maxAction = self.computeActionFromValues(state)
                 newValues[state] = self.computeQValueFromValues(state, maxAction)
- 
-            for state in allStates:               
+            for state in allStates:
                 self.values[state] = newValues[state]
             print i
-            
 
-
-    def computeQValueFromValues(self, state, action):
+    def computeQValueFromValues(self, state, action): # computes qvalue from values of an action
         q = 0
         transitionStates = mdp(self.model, state, action)
         for nextState, prob in transitionStates:
@@ -53,10 +46,10 @@ class Learning(object):
             q += prob * (cost + (self.discount * self.getValue(nextState)))
         return q
 
-    def computeActionFromValues(self, state):
+    def computeActionFromValues(self, state): # computes best action from action values
         if state == "TERMINAL_STATE":
             return None
-            
+
         bestValue = float("inf")
         bestAction = None
         possibleActions = self.model.get_possible_actions(state)
@@ -67,19 +60,15 @@ class Learning(object):
 
             if (state, action) not in self.qvalues:
                 self.qvalues[state, action] = 0
-            self.qvalues[state, action] = q  
+            self.qvalues[state, action] = q
 
             if q is min(q, bestValue):
-
                 bestValue = q
                 bestAction = action
-            
-            
-        
+
         return bestAction
 
     def getValue(self, state):
-
         return self.values[state]
 
     def getPolicy(self, state):
@@ -90,21 +79,22 @@ class Learning(object):
 
     def getQValue(self, state, action):
         return self.computeQValueFromValues(state, action)
-        
+
+    # normalize output on a 0 to 1 scale
     def normalize(self):
         print self.qvalues
-        
+
         vals = Counter()
         for val in self.qvalues:
             if self.qvalues[val] == -100.0:
                 continue
             vals[val] = self.qvalues[val]
 
-
         for k in vals.keys():
             self.qvalues[k] = float(vals[k] - min(vals.values()))/(max(vals.values()) - min(vals.values()))
         print self.qvalues
 
+# Route Graph Class - generates the route maps from source airport to destination airport
 class RouteMap(object):
     """docstring for GraphNode"""
     def __init__(self, source=None, destination=None):
@@ -129,21 +119,19 @@ class RouteMap(object):
                 if row[1] not in self.connected:
                     self.connected.append(row[1])
 
-    def estimate_costs(self, dataset):
-        time_start = datetime.now()    
+    def estimate_costs(self, dataset): # generate a hash where key = (source, destination) pair and val = cost
+        time_start = datetime.now()
         for row in dataset:
             allStates = self.get_all_states()
 
             if (row[0] in allStates) and (row[1] in allStates):
                 self.costs[(row[0], row[1])] = float(row[2])
-                
+
         allStates = self.get_all_states()
         for state in allStates:
             self.costs[state, state] = 100
         self.costs[self.destination, "TERMINAL_STATE"] = -150
         #print self.costs
-                
-
 
     def train(self, dataset): # add flights for this map on big dataset
         for row in dataset:
@@ -162,9 +150,7 @@ class RouteMap(object):
                 flight = Flight(source, destination, cancelled, delayed)
                 self.flights.append(flight) ##save into flight class
 
-
-    def get_all_airports(self, dataset):
-
+    def get_all_airports(self, dataset): # retrun all airports
         for row in dataset:
             name = row[1]
             code = row[0]
@@ -173,14 +159,14 @@ class RouteMap(object):
 
         return self.allAirports
 
-    def get_all_states(self):
+    def get_all_states(self): # get all states in map
         temp = list(self.connected)
         temp.append(self.source)
         if self.destination not in temp:
             temp.append(self.destination)
         return temp
 
-    def get_possible_actions(self, airport):
+    def get_possible_actions(self, airport): # get possible actions in a state
         if airport == self.source:
             temp = list(self.connected)
             #print "cost", self.costs(self.source, self.destination)
@@ -212,6 +198,7 @@ class RouteMap(object):
                 specificFlight.append(flight)
         return specificFlight
 
+# Flight class - class that defines a flight between two airports
 class Flight(object):
     flightCount = 0
     def __init__(self, source, destination, cancelled, delayed):
@@ -230,6 +217,7 @@ class Flight(object):
             return True
         return False
 
+# function to load data from csv file
 def load_data(filepath):
     dataset = []
 
@@ -242,15 +230,16 @@ def load_data(filepath):
 
             dataset.append((parsedRow))
         f.close()
-        
+
     dataset.pop(0)
     return dataset
 
+# function to calculate probabilities from source airport to destination airport
 def mdp(model, source, destination):
     ##example for delayed and cancelled
     flights = model.get_specific_flights(source, destination)
     flightsNum, delayedNum, cancelledNum = 0, 0, 0
-    
+
     for flight in flights:
         flightsNum += 1
         if flight.delayed:
@@ -263,30 +252,27 @@ def mdp(model, source, destination):
     delayedProb = delayedNum/float(flightsNum)
     cancelledProb = cancelledNum/float(flightsNum)
     noProb = 1 - (delayedProb + cancelledProb)
-    
+
     return [(destination, noProb), (source, cancelledProb), (destination, delayedProb)]
 
+## USED FOR DEBUGGING
 def find(source, destination):
     model_data = load_data('dataset.csv')
-    
+
     model = RouteMap(source, destination)
     model.create(model_data)
-
-
 
     print "Training Model"
     model.train(model_data)
     print "Model is trained"
     model_data = None
-    
+
     cost_data = load_data('costs.csv')
     print "Finding Costs"
     model.estimate_costs(cost_data)
     print "Costs are found"
     cost_data = None
 
-    
-    
     print "Running value iteration"
     learn = Learning(model)
     print "Finished learning"
@@ -300,43 +286,37 @@ def find(source, destination):
         return json
     print "Best airport is:" + action
     #learn.normalize()
-    
+
     routes = []
     direct = None
     codename = {}
-    
+
     code_data = load_data('nameset.csv')
     airports = model.get_all_airports(code_data)
     code_data = None
 
     for name, code in airports:
         codename[code] = name
-    
-    
+
     for c in model.connected:
         if (source, c) in learn.qvalues and (c, destination) in learn.qvalues:
-            
             routes.append({
                 'name': codename[c],
                 'second': round(learn.qvalues[(c, destination)], 3),
                 'first': round(learn.qvalues[(source, c)], 3)
-                
             })
     if (source, destination) in learn.qvalues:
         direct = "Direct flight: "+ str(round(learn.qvalues[(source, destination)], 3))
-        
 
     sortedRoutes = sorted(routes, key=lambda route: route["first"])
     print sortedRoutes
-    
+
     # for qval in learn.qvalues.keys():
     #     for connect in model.connected:
     #         if qval[0] == connected:
     #
     #     if (qval[0] in model.connected) or (qval[1] in model.connected):
     #         print qval
-    
-
     json = {
             "found": "yes",
             "source": model.source,
@@ -349,27 +329,21 @@ def find(source, destination):
 
     return json
 
-
 def airports_list():
     kList = RouteMap()
     code_data = load_data('nameset.csv')
     airports = kList.get_all_airports(code_data)
     response = [{"name": name +" - "+ code, "code": code} for name, code in airports]
-    
     json = {
             "status": "ok",
             "data": response
             }
     return json
 
-
 def main():
     find("BOS", "LGA")
     #airports_list()
     pass
-
-
-
 
 if __name__ == "__main__":
     main()
