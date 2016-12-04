@@ -5,6 +5,9 @@
 	<script src="autocomplete/jquery.easy-autocomplete.min.js"></script>
 	<link rel="stylesheet" href="autocomplete/easy-autocomplete.min.css">
 	<style>
+		.load {
+			margin-top: 9999px;
+		}
 		.result {
 			margin-left: 20px;
 		}
@@ -33,7 +36,8 @@
 		/* When the body has the loading class, we turn
 		   the scrollbar off with overflow:hidden */
 		.loading {
-			display: none;
+			position: fixed;
+			display: block;
 			border: 8px solid #f3f3f3;
 			border-top: 8px solid #434343;
 			border-radius: 50%;
@@ -41,9 +45,10 @@
 			height: 80px;
 			animation: spin 1s linear infinite;
 			z-index: 1;
-			margin-left: auto;
-			margin-right: auto;
-			margin-bottom: 9999px;
+			top: 50%;
+			left: 50%;
+			margin-top: -40px;
+			margin-left: -40px;
 		}
 		.loading1 {
 			display: none;
@@ -62,10 +67,10 @@
 		}
 	</style>
 </head>
-<body>
+<body style="overflow: hidden;">
 	<div class="loading"></div>
 	<section>
-		<div class="header">
+		<div id="header" class="load">
 			<h1>Air Travel Planner</h1>
 			<p class="summary">
 				Air Travel Planner is an application designed to calculate the optimimal flight path between two airports. For our models, we focus on direct flights and one-stop layover flights.
