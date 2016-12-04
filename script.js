@@ -11,7 +11,7 @@ function show_initial(source, destination){
 	$(".main").html(function(){
 		source = "<div class='state initial_state'>"+source+"</div>";
 		intermediate = "<div class='intermidiate'><div class='loading1'></div></div>"
-		destination = "<div class='state initial_state'>"+destination+"</div>";
+		destination = "<div class='state initial_state destination'>"+destination+"</div>";
 		return source + intermediate + destination
 	});
 }
@@ -88,7 +88,7 @@ function callback_return_optimal(response){
 		}
 	}
 	$(".main").prepend("<div>Total number of flights analyzed: <b>"+ num+"</b></div>");
-	$(".main").append("<div class='result'>The best route is: "+optimal+"</div><br><a href='.'>Try again</a></div>");
+	$(".main").append("<div class='result'><span>The best route is: "+optimal+"<br><a href='.'>Try again</a></span></div>");
 }
 
 function isIn(needle, haystack){
