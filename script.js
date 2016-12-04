@@ -36,10 +36,10 @@ function callback_get_airports(response) {
 }
 
 function find_optimal_routes(){
-	
+
 	var source = $("#src").val();
 	var destination = $("#destination").val();
-	
+
 	source = source.split(' - ');
 	destination = destination.split(' - ');
 	show_initial(source[0], destination[0]);
@@ -51,6 +51,7 @@ function find_optimal_routes(){
 		success: callback_return_optimal
 	});
 }
+
 function callback_return_optimal(response){
 	$(".loading1").hide();
 	console.log(response);
@@ -58,20 +59,45 @@ function callback_return_optimal(response){
 		$(".main").append("No flights found between these cities<br><a href='.'>Try again</a></div>");
 		return
 	}
-	var direct = response["direct"]
-	if(direct){
-		$(".intermidiate").append("<div class='state'>"+direct+"</div>")
+	var direct = response["direct"];
+	var routes = response["routes"];
+	var optimal = response.optimal;
+	var isDirect = isIn(optimal, routes);
+
+	if (isDirect == false){
+		if(direct){
+			$(".intermidiate").append("<div class='best state'>"+direct+"</div>");
+		}
+		for (route in routes){
+			$(".intermidiate").append("<div class='state'>" +routes[route]["first"]+" "+routes[route]["name"]+" "+routes[route]["second"]+"</div>");
+		}
+	}else{
+		if(direct){
+			$(".intermidiate").append("<div class='state'>"+direct+"</div>");
+		}
+		for (route in routes){
+			if (routes[route]["name"] == optimal){
+				state = "'best state'";
+			}else{
+				state = "'state'";
+			}
+			$(".intermidiate").append("<div class="+state+">" +routes[route]["first"]+" "+routes[route]["name"]+" "+routes[route]["second"]+"</div>");
+		}
 	}
-	var routes = response["routes"]
-	for (route in routes){
-		$(".intermidiate").append("<div class='state'>" +routes[route]["first"]+" "+routes[route]["name"]+" "+routes[route]["second"]+"</div>");
+	$(".main").append("<div class='result'>The best route is: "+optimal+"</div>");
+}
+
+function isIn(needle, haystack){
+	var length = haystack.length;
+	for (var i = 0 ; i < length ; ++i){
+		if (haystack[i]["name"] == needle) {
+			return true;
+		}
 	}
-	var optimal = response.optimal
-	$(".main").append("<div >The best route " + optimal+ "</div>");
+	return false;
 }
 
 $(".find").click(function(){
 	find_optimal_routes();
 });
 get_airports();
-
