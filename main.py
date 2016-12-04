@@ -49,7 +49,7 @@ class Learning(object):
             elif (state == self.source) and (nextState == self.destination):
                 cost = self.model.get_cost(state, nextState)
             elif (state != self.source) and (nextState == self.destination):
-                cost = self.model.get_cost(self.source, state) + self.model.get_cost(state, nextState)
+                cost = self.model.get_cost(self.source, state) + self.model.get_cost(state, nextState) - 100
             q += prob * (cost + (self.discount * self.getValue(nextState)))
         return q
 
@@ -96,7 +96,7 @@ class Learning(object):
         
         vals = Counter()
         for val in self.qvalues:
-            if self.qvalues[val] == -100.0:
+            if self.qvalues[val] == -200.0:
                 continue
             vals[val] = self.qvalues[val]
 
@@ -128,6 +128,13 @@ class RouteMap(object):
             if row[1] in flyingTo and row[2] == self.destination:
                 if row[1] not in self.connected:
                     self.connected.append(row[1])
+        
+        for row in dataset:
+            if (row[1] == self.source) and (row[2] == self.destination):
+                self.connected.append(self.destination)
+                break
+        
+        print self.connected
 
     def estimate_costs(self, dataset):
         time_start = datetime.now()    
@@ -140,7 +147,7 @@ class RouteMap(object):
         allStates = self.get_all_states()
         for state in allStates:
             self.costs[state, state] = 100
-        self.costs[self.destination, "TERMINAL_STATE"] = -150
+        self.costs[self.destination, "TERMINAL_STATE"] = -200
         #print self.costs
                 
 
@@ -184,8 +191,6 @@ class RouteMap(object):
         if airport == self.source:
             temp = list(self.connected)
             #print "cost", self.costs(self.source, self.destination)
-            if (self.source, self.destination) in self.costs:
-                temp.append(self.destination)
             return temp
         elif airport == self.destination:
             return ["TERMINAL_STATE"]
@@ -364,7 +369,7 @@ def airports_list():
 
 
 def main():
-    find("BOS", "LGA")
+    find("MQT", "JFK")
     #airports_list()
     pass
 
