@@ -110,17 +110,17 @@ class RouteMap(object):
         flyingTo = []
 
         for row in dataset:
-            if row[1] == self.source:
-                if row[2] not in flyingTo:
-                    flyingTo.append(row[2])
+            if row[0] == self.source:
+                if row[1] not in flyingTo:
+                    flyingTo.append(row[1])
 
         for row in dataset:
-            if row[1] in flyingTo and row[2] == self.destination:
-                if row[1] not in self.connected:
-                    self.connected.append(row[1])
+            if row[0] in flyingTo and row[1] == self.destination:
+                if row[0] not in self.connected:
+                    self.connected.append(row[0])
         
         for row in dataset:
-            if (row[1] == self.source) and (row[2] == self.destination):
+            if (row[0] == self.source) and (row[1] == self.destination):
                 self.connected.append(self.destination)
                 break
         
@@ -142,15 +142,23 @@ class RouteMap(object):
 
     def train(self, dataset): # add flights for this map on big dataset
         for row in dataset:
-            source = row[1]
-            destination = row[2]
-            delayed = row[4]
-
-            if row[3] != "":
+            if row[0] == "ORIGIN":
+                continue
+            source = row[0]
+            destination = row[1]
+            
+            if row[3] == "":
+                cancelled = 0
+            else:
                 cancelled = int(float(row[3]))
-            if row[4] != "":
-                delayed = int(float(row[4]))
 
+            if row[2] == "":
+                delayed = 0
+            else:
+                delayed = int(float(row[2]))
+            
+
+            
             if (source == self.source and destination in self.connected)\
                 or (source in self.connected and destination == self.destination)\
                     or (source == self.source and destination == self.destination):
@@ -290,7 +298,7 @@ def find(source, destination):
         }
         return json
     print "Best airport is:" + action
-    #learn.normalize()
+    print "number of flights in analyzed: ", Flight.flightCount
 
     routes = []
     direct = None
@@ -328,7 +336,8 @@ def find(source, destination):
             "destination": model.destination,
             "optimal": codename[action],
             "routes": sortedRoutes,
-            "direct": direct
+            "direct": direct,
+            "flightNum": Flight.flightCount
             }
     #rt = model.get_specific_flights("BOS", "MIA")
 
@@ -346,7 +355,7 @@ def airports_list():
     return json
 
 def main():
-    find("MQT", "JFK")
+    find("ABQ", "LAX")
     #airports_list()
     pass
 

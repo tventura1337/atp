@@ -61,6 +61,7 @@ function callback_return_optimal(response){
 	}
 	var direct = response["direct"];
 	var routes = response["routes"];
+	var num = response["flightNum"];
 	var optimal = response.optimal;
 	var isDirect = isIn(optimal, routes);
 
@@ -84,7 +85,8 @@ function callback_return_optimal(response){
 			$(".intermidiate").append("<div class="+state+">" +routes[route]["first"]+" "+routes[route]["name"]+" "+routes[route]["second"]+"</div>");
 		}
 	}
-	$(".main").append("<div class='result'>The best route is: "+optimal+"</div>");
+	$(".main").prepend("<div>Total number of flights analyzed: "+ num+"</div>");
+	$(".main").append("<div class='result'>The best route is: "+optimal+"</div><br><a href='.'>Try again</a></div>");
 }
 
 function isIn(needle, haystack){
