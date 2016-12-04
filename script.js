@@ -31,6 +31,8 @@ function callback_get_airports(response) {
 
 	};
 	$(".loading").hide();
+	$("body").removeAttr("style");
+	$("#header").removeClass("load");
 	$("#src").easyAutocomplete(options);
 	$("#destination").easyAutocomplete(options);
 }
