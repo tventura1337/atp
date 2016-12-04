@@ -87,7 +87,7 @@ function callback_return_optimal(response){
 			$(".intermidiate").append("<div class="+state+">" +routes[route]["first"]+" "+routes[route]["name"]+" "+routes[route]["second"]+"</div>");
 		}
 	}
-	$(".main").prepend("<div>Total number of flights analyzed: "+ num+"</div>");
+	$(".main").prepend("<div>Total number of flights analyzed: <b>"+ num+"</b></div>");
 	$(".main").append("<div class='result'>The best route is: "+optimal+"</div><br><a href='.'>Try again</a></div>");
 }
 
