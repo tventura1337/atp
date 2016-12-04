@@ -58,7 +58,7 @@ function callback_return_optimal(response){
 	$(".loading1").hide();
 	console.log(response);
 	if (response["found"] == "No"){
-		$(".main").append("No flights found between these cities<br><a href='.'>Try again</a></div>");
+		$(".main").append("<div class='result'><span>No flights found between these cities<br><a href='.'>Try again</a></span></div>");
 		return
 	}
 	var direct = response["direct"];
@@ -87,7 +87,7 @@ function callback_return_optimal(response){
 			$(".intermidiate").append("<div class="+state+">" +routes[route]["first"]+" "+routes[route]["name"]+" "+routes[route]["second"]+"</div>");
 		}
 	}
-	$(".main").prepend("<div>Total number of flights analyzed: <b>"+ num+"</b></div>");
+	$(".main").prepend("<div class='total'>Total number of flights analyzed: <b>"+ num+"</b></div><br>");
 	$(".main").append("<div class='result'><span>The best route is: "+optimal+"<br><a href='.'>Try again</a></span></div>");
 }
 
